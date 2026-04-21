@@ -1,0 +1,44 @@
+name: Update IP Logs
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  update-ips:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.issue.title, 'IP Log:')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
+      - name: Extract IP from issue
+        id: extract
+        run: |
+          IP=$(echo "${{ github.event.issue.body }}" | grep -oP 'Visitor IP: \K[0-9.]+')
+          TIMESTAMP="${{ github.event.issue.title }}"
+          echo "::set-output name=ip::$IP"
+          echo "::set-output name=timestamp::$TIMESTAMP"
+          
+      - name: Update ips.txt
+        run: |
+          echo "${{ steps.extract.outputs.timestamp }} - ${{ steps.extract.outputs.ip }}" >> ips.txt
+          
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add ips.txt
+          git commit -m "Add IP log"
+          git push
+          
+      - name: Close issue
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
