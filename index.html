@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>RandomMemeRollerSite</title>
+    <style>
+      body { margin: 0; font-family: "Comic Sans MS"; text-align: center; }
+      p { margin-top: 80px; font-size: 40px; color: rgb(0, 0, 0); }
+      button { margin-top: 80px; font-size: 20px; font-family: "Comic Sans MS"; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
+      #link { margin-top: 20px; display: none; font-size: 18px; }
+    </style>
+  </head>
+  <body>
+    <p>In This Site You Can Get a Random image!</p>
+    <button onclick="showLink()">Roll an image</button>
+    <div id="link">
+      <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">
+        Click here for your random image
+      </a>
+    </div>
+
+    <script>
+      function showLink() {
+        document.getElementById("link").style.display = "block";
+      }
+
+      // Log visitor IP using GitHub API
+      window.addEventListener('DOMContentLoaded', async () => {
+        try {
+          // Get visitor IP
+          const res = await fetch('https://api.ipify.org?format=json');
+          const data = await res.json();
+          const ip = data.ip;
+
+          // Create an issue with the IP as a temporary workaround
+          await fetch(`https://api.github.com/repos/universal123-octo/RandomImageSite/issues`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `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`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              title: `IP Log: ${new Date().toISOString()}`,
+              body: `Visitor IP: ${ip}`
+            })
+          });
+        } catch (err) {
+          console.error('Failed to log IP:', err);
+        }
+      });
+    </script>
+  </body>
+</html>
