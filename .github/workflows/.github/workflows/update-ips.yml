@@ -1,12 +1,12 @@
 name: Update IP Logs
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]
 
 jobs:
   update-ips:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.issue.title, 'IP Log:')
+    if: contains(github.event.issue.labels.*.name, 'ip-log')
     permissions:
       contents: write
       issues: write
@@ -24,6 +24,13 @@ jobs:
           
       - name: Update ips.txt
         run: |
+          # Create ips.txt if it doesn't exist
+          if [ ! -f ips.txt ]; then
+            echo "Timestamp - IP Address" > ips.txt
+            echo "----------------------" >> ips.txt
+          fi
+          
+          # Add the new IP
           echo "${{ steps.extract.outputs.timestamp }} - ${{ steps.extract.outputs.ip }}" >> ips.txt
           
       - name: Commit and push changes
@@ -31,7 +38,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add ips.txt
-          git commit -m "Add IP log"
+          git commit -m "Add IP log: ${{ steps.extract.outputs.ip }}"
           git push
           
       - name: Close issue
@@ -44,4 +51,12 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.issue.number,
               state: 'closed'
+            });
+            
+            // Add a comment to the issue
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'IP logged successfully. This issue will be closed automatically.'
             });
