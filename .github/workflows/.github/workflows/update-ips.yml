@@ -7,17 +7,20 @@ jobs:
   update-ips:
     runs-on: ubuntu-latest
     if: startsWith(github.event.issue.title, 'IP Log:')
+    permissions:
+      contents: write
+      issues: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         
       - name: Extract IP from issue
         id: extract
         run: |
           IP=$(echo "${{ github.event.issue.body }}" | grep -oP 'Visitor IP: \K[0-9.]+')
           TIMESTAMP="${{ github.event.issue.title }}"
-          echo "::set-output name=ip::$IP"
-          echo "::set-output name=timestamp::$TIMESTAMP"
+          echo "ip=$IP" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
           
       - name: Update ips.txt
         run: |
@@ -32,11 +35,11 @@ jobs:
           git push
           
       - name: Close issue
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.issues.update({
+            github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
